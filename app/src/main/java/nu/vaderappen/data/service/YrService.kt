@@ -1,5 +1,6 @@
 package nu.vaderappen.data.service
 
+import com.squareup.moshi.Moshi
 import kotlinx.coroutines.runBlocking
 import nu.vaderappen.BuildConfig
 import okhttp3.OkHttpClient
@@ -13,7 +14,7 @@ import kotlin.random.Random
 
 
 fun main() = runBlocking {
-    val service = WeatherService.create()
+    val service = YrService.create()
     val r = Random
 
     val latitude = (r.nextDouble()  * 180 - 90).format(3);
@@ -21,16 +22,22 @@ fun main() = runBlocking {
     val weatherData = service.getWeatherData(latitude, longitude)
 
 
-    println(weatherData)
+    weatherData.properties.timeseries
+        .groupBy { it.time.toLocalDate() }
+        .toSortedMap()
+        .forEach { (date, timeSeries) ->
+            println("$date at ${weatherData.geometry.coordinates}")
+            println(timeSeries)
+        }
 
 
 }
 
-private  fun Double.format(digits: Int) = BigDecimal(this)
+fun Double.format(digits: Int) = BigDecimal(this)
     .setScale(digits, RoundingMode.HALF_EVEN)
     .toDouble()
 
-interface WeatherService {
+interface YrService {
 
     @GET("weatherapi/locationforecast/2.0/compact")
     suspend fun getWeatherData(
@@ -41,7 +48,7 @@ interface WeatherService {
     companion object {
         private const val BASE_URL = "https://api.met.no/"
 
-        fun create(): WeatherService {
+        fun create(): YrService {
             val client = OkHttpClient.Builder()
                 .addNetworkInterceptor { chain ->
                     chain.proceed(
@@ -57,16 +64,20 @@ interface WeatherService {
                 .build()
 
 
+            val moshi = Moshi.Builder()
+                .add(LocaleDateTimeAdapter())
+                .build()
+
             val retrofit = Retrofit.Builder()
                 .baseUrl(BASE_URL)
                 .client(client)
                 .addConverterFactory(
-                    MoshiConverterFactory.create()
+                    MoshiConverterFactory.create(moshi)
                         .failOnUnknown()
                 )
                 .build()
 
-            return retrofit.create(WeatherService::class.java)
+            return retrofit.create(YrService::class.java)
         }
     }
 }

@@ -1,7 +1,12 @@
 package nu.vaderappen.data.service
 
+import com.squareup.moshi.FromJson
 import com.squareup.moshi.Json
 import com.squareup.moshi.JsonClass
+import com.squareup.moshi.ToJson
+import java.time.LocalDateTime
+import java.time.OffsetDateTime
+import java.time.ZoneId
 
 @JsonClass(generateAdapter = true)
 data class WeatherData(
@@ -24,7 +29,7 @@ data class Properties(
 
 @JsonClass(generateAdapter = true)
 data class Meta(
-    @Json(name = "updated_at") val updatedAt: String,
+    @Json(name = "updated_at") val updatedAt: LocalDateTime,
     @Json(name = "units") val units: Units
 )
 
@@ -41,7 +46,7 @@ data class Units(
 
 @JsonClass(generateAdapter = true)
 data class TimeSeries(
-    @Json(name = "time") val time: String,
+    @Json(name = "time") val time: LocalDateTime,
     @Json(name = "data") val data: WeatherDataDetails
 )
 
@@ -84,3 +89,16 @@ data class NextHoursDetails(
     @Json(name = "precipitation_amount") val precipitationAmount: Double?
 )
 
+
+
+class LocaleDateTimeAdapter {
+
+    @FromJson
+    fun fromJson(date: String): LocalDateTime = OffsetDateTime
+        .parse(date)
+        .atZoneSameInstant(ZoneId.systemDefault())
+        .toLocalDateTime()
+
+    @ToJson
+    fun toJson(date: LocalDateTime): String = date.toString()
+}
