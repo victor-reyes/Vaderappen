@@ -1,7 +1,6 @@
 package nu.vaderappen.data.service
 
 import com.squareup.moshi.Moshi
-import kotlinx.coroutines.runBlocking
 import nu.vaderappen.BuildConfig
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -10,28 +9,6 @@ import retrofit2.http.GET
 import retrofit2.http.Query
 import java.math.BigDecimal
 import java.math.RoundingMode
-import kotlin.random.Random
-
-
-fun main() = runBlocking {
-    val service = YrService.create()
-    val r = Random
-
-    val latitude = (r.nextDouble()  * 180 - 90).format(3);
-    val longitude = (r.nextDouble()  * 360 - 180).format(3)
-    val weatherData = service.getWeatherData(latitude, longitude)
-
-
-    weatherData.properties.timeseries
-        .groupBy { it.time.toLocalDate() }
-        .toSortedMap()
-        .forEach { (date, timeSeries) ->
-            println("$date at ${weatherData.geometry.coordinates}")
-            println(timeSeries)
-        }
-
-
-}
 
 fun Double.format(digits: Int) = BigDecimal(this)
     .setScale(digits, RoundingMode.HALF_EVEN)
