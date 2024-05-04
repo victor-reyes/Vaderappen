@@ -16,7 +16,7 @@ fun Double.format(digits: Int) = BigDecimal(this)
 
 interface YrService {
 
-    @GET("weatherapi/locationforecast/2.0/compact")
+    @GET("weatherapi/locationforecast/2.0/complete")
     suspend fun getWeatherData(
         @Query("lat") latitude: Double,
         @Query("lon") longitude: Double
