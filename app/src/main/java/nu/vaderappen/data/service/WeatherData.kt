@@ -40,8 +40,8 @@ data class Units(
     @Json(name = "air_temperature") val airTemperature: String,
     @Json(name = "air_temperature_max") val airTemperatureMax: String,
     @Json(name = "air_temperature_min") val airTemperatureMin: String,
-    @Json(name = "air_temperature_percentile_10") val airTemperaturePercentile10: String,
-    @Json(name = "air_temperature_percentile_90") val airTemperaturePercentile90: String,
+    @Json(name = "air_temperature_percentile_10") val airTemperaturePercentile10: String?,
+    @Json(name = "air_temperature_percentile_90") val airTemperaturePercentile90: String?,
     @Json(name = "cloud_area_fraction") val cloudAreaFraction: String,
     @Json(name = "cloud_area_fraction_high") val cloudAreaFractionHigh: String,
     @Json(name = "cloud_area_fraction_low") val cloudAreaFractionLow: String,
@@ -49,17 +49,17 @@ data class Units(
     @Json(name = "dew_point_temperature") val dewPointTemperature: String,
     @Json(name = "fog_area_fraction") val fogAreaFraction: String,
     @Json(name = "precipitation_amount") val precipitationAmount: String,
-    @Json(name = "precipitation_amount_max") val precipitationAmountMax: String,
-    @Json(name = "precipitation_amount_min") val precipitationAmountMin: String,
-    @Json(name = "probability_of_precipitation") val probabilityOfPrecipitation: String,
-    @Json(name = "probability_of_thunder") val probabilityOfThunder: String,
+    @Json(name = "precipitation_amount_max") val precipitationAmountMax: String?,
+    @Json(name = "precipitation_amount_min") val precipitationAmountMin: String?,
+    @Json(name = "probability_of_precipitation") val probabilityOfPrecipitation: String?,
+    @Json(name = "probability_of_thunder") val probabilityOfThunder: String?,
     @Json(name = "relative_humidity") val relativeHumidity: String,
     @Json(name = "ultraviolet_index_clear_sky") val ultravioletIndexClearSky: String,
     @Json(name = "wind_from_direction") val windFromDirection: String,
     @Json(name = "wind_speed") val windSpeed: String,
-    @Json(name = "wind_speed_of_gust") val windSpeedOfGust: String,
-    @Json(name = "wind_speed_percentile_10") val windSpeedPercentile10: String,
-    @Json(name = "wind_speed_percentile_90") val windSpeedPercentile90: String,
+    @Json(name = "wind_speed_of_gust") val windSpeedOfGust: String?,
+    @Json(name = "wind_speed_percentile_10") val windSpeedPercentile10: String?,
+    @Json(name = "wind_speed_percentile_90") val windSpeedPercentile90: String?,
 )
 
 @JsonClass(generateAdapter = true)
@@ -97,8 +97,8 @@ data class Summary(
 data class InstantDetails(
     @Json(name = "air_pressure_at_sea_level") val airPressureAtSeaLevel: Double,
     @Json(name = "air_temperature") val airTemperature: Double,
-    @Json(name = "air_temperature_percentile_10") val airTemperaturePercentile10: Double,
-    @Json(name = "air_temperature_percentile_90") val airTemperaturePercentile90: Double,
+    @Json(name = "air_temperature_percentile_10") val airTemperaturePercentile10: Double?,
+    @Json(name = "air_temperature_percentile_90") val airTemperaturePercentile90: Double?,
     @Json(name = "cloud_area_fraction") val cloudAreaFraction: Double,
     @Json(name = "cloud_area_fraction_high") val cloudAreaFractionHigh: Double,
     @Json(name = "cloud_area_fraction_low") val cloudAreaFractionLow: Double,
@@ -110,8 +110,8 @@ data class InstantDetails(
     @Json(name = "wind_from_direction") val windFromDirection: Double,
     @Json(name = "wind_speed") val windSpeed: Double,
     @Json(name = "wind_speed_of_gust") val windSpeedOfGust: Double?,
-    @Json(name = "wind_speed_percentile_10") val windSpeedPercentile10: Double,
-    @Json(name = "wind_speed_percentile_90") val windSpeedPercentile90: Double,
+    @Json(name = "wind_speed_percentile_10") val windSpeedPercentile10: Double?,
+    @Json(name = "wind_speed_percentile_90") val windSpeedPercentile90: Double?,
 )
 
 @JsonClass(generateAdapter = true)
@@ -121,7 +121,7 @@ data class NextHoursDetails(
     @Json(name = "precipitation_amount") val precipitationAmount: Double?,
     @Json(name = "precipitation_amount_max") val precipitationAmountMax: Double?,
     @Json(name = "precipitation_amount_min") val precipitationAmountMin: Double?,
-    @Json(name = "probability_of_precipitation") val probabilityOfPrecipitation: Double,
+    @Json(name = "probability_of_precipitation") val probabilityOfPrecipitation: Double?,
     @Json(name = "probability_of_thunder") val probabilityOfThunder: Double?,
 )
 

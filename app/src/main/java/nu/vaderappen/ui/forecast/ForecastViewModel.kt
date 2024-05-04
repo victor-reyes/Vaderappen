@@ -29,7 +29,9 @@ class ForecastViewModel(
 
             val latitude = (r.nextDouble() * 180 - 90).format(3);
             val longitude = (r.nextDouble() * 360 - 180).format(3)
-            val weather = yr.getWeatherData(59.3103, 18.1036)
+            val barcelona = 41.390205 to 2.154007
+            val stockholm = 59.3103 to 18.1036
+            val weather = yr.getWeatherData(stockholm.first, stockholm.second)
                 .toWeather()
             _forecastUi.emit(Forecast(weather))
         }
