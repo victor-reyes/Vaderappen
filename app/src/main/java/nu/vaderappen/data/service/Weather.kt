@@ -19,6 +19,28 @@ data class Day(
 )
 
 
+sealed class Precipitation(open val probability: Float?) {
+    data class MinMaxPrecipitation(
+        val min: Double,
+        val max: Double,
+        override val probability: Float?,
+    ) : Precipitation(probability) {
+        override fun toString(): String {
+            return "$min-$max" + if (probability != null) " ($probability%)" else ""
+        }
+    }
+
+    data class PrecipitationAmount(
+        val amount: Double,
+        override val probability: Float?,
+    ) : Precipitation(probability) {
+        override fun toString(): String {
+            return "$amount" + if (probability != null) " ($probability%)" else ""
+
+        }
+    }
+}
+
 fun WeatherData.toWeather(): Weather {
     val updateAt = properties.meta.updatedAt
     val coordinates = geometry.coordinates
@@ -42,19 +64,38 @@ fun TimeSeries.getSymbol(): WeatherSymbol? = with(data) {
     }
 }
 
-fun TimeSeries.getPrecipitationAmount(): Double = with(data) {
-    return@with when {
-        (next1Hours != null) -> next1Hours.details.precipitationAmount ?: 0.0
-        (next6Hours != null) -> next6Hours.details.precipitationAmount ?: 0.0
-        (next12Hours != null) -> next12Hours.details.precipitationAmount ?: 0.0
-        else -> 0.0
+val TimeSeries.precipitation: Precipitation?
+    get() = with(data) {
+        return@with when {
+            (next1Hours != null) -> next1Hours.details.getMinMaxPrecipitationAmount()
+            (next6Hours != null) -> next6Hours.details.getMinMaxPrecipitationAmount()
+            (next12Hours != null) -> next12Hours.details.getMinMaxPrecipitationAmount()
+            else -> null
+        }
     }
-}
 
-private fun LocalDate.toSimpleDate() =
-    "${
-        dayOfWeek.getDisplayName(
-            TextStyle.SHORT,
-            Locale.getDefault()
+private fun NextHoursDetails.getMinMaxPrecipitationAmount(): Precipitation? =
+    if (precipitationAmountMin != null && precipitationAmountMax != null && precipitationAmountMax > 0)
+        Precipitation.MinMaxPrecipitation(
+            precipitationAmountMin,
+            precipitationAmountMax,
+            probabilityOfPrecipitation?.toFloat()
         )
-    }, $dayOfMonth ${month.getDisplayName(TextStyle.SHORT, Locale.getDefault())}"
+    else if (precipitationAmount != null && precipitationAmount > 0)
+        Precipitation.PrecipitationAmount(
+            precipitationAmount,
+            probabilityOfPrecipitation?.toFloat()
+        )
+    else null
+
+private fun LocalDate.toSimpleDate(): String {
+    val today = LocalDate.now()
+    val dayOfWeek = when (today.dayOfWeek) {
+        this.dayOfWeek -> "Idag"
+        this.dayOfWeek - 1 -> "Imorgon"
+        else -> this.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
+    }
+    val date = "$dayOfMonth ${month.getDisplayName(TextStyle.SHORT, Locale.getDefault())}"
+
+    return "$dayOfWeek, $date"
+}
