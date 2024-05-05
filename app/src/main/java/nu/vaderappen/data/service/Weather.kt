@@ -19,24 +19,34 @@ data class Day(
 )
 
 
-sealed class Precipitation(open val probability: Float?) {
+sealed interface Precipitation {
+    val probability: Float?
+    fun getShortVersion(): String
+
     data class MinMaxPrecipitation(
         val min: Double,
         val max: Double,
         override val probability: Float?,
-    ) : Precipitation(probability) {
+    ) : Precipitation {
+        override fun getShortVersion(): String {
+            return "$min-$max"
+        }
+
         override fun toString(): String {
-            return "$min-$max" + if (probability != null) " ($probability%)" else ""
+            return "$min-$max${probability?.let { " ($it%)" } ?: ""}"
         }
     }
 
     data class PrecipitationAmount(
         val amount: Double,
         override val probability: Float?,
-    ) : Precipitation(probability) {
-        override fun toString(): String {
-            return "$amount" + if (probability != null) " ($probability%)" else ""
+    ) : Precipitation {
+        override fun getShortVersion(): String {
+            return "$amount"
+        }
 
+        override fun toString(): String {
+            return "$amount${probability?.let { " ($it%)" } ?: ""}"
         }
     }
 }

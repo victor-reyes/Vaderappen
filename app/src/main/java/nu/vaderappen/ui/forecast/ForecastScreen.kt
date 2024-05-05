@@ -154,9 +154,10 @@ private fun Day(day: Day) {
 fun Precipitation(
     precipitation: Precipitation,
     fontSize: TextUnit = MaterialTheme.typography.titleMedium.fontSize,
+    detailed: Boolean = true,
 ) {
     Text(
-        text = precipitation.toString(),
+        text = if (detailed) precipitation.toString() else precipitation.getShortVersion(),
         color = Color.Blue.copy(
             precipitation.probability?.let { (it * 1.5f + 33).coerceAtMost(100f) / 100 } ?: 1f),
         fontSize = fontSize,
