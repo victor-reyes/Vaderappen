@@ -32,12 +32,12 @@ import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import nu.vaderappen.data.service.Day
 import nu.vaderappen.data.service.Precipitation
-import nu.vaderappen.data.service.getSymbol
 import nu.vaderappen.data.service.precipitation
 import nu.vaderappen.data.service.symbol
 import nu.vaderappen.test.TestData
@@ -99,7 +99,7 @@ private fun Day(day: Day) {
                             .size(24.dp)
                             .wrapContentSize()
                     )
-                    hour.getSymbol()?.let {
+                    hour.symbol?.let {
                         Image(
                             painter = painterResource(id = it.drawableId),
                             contentDescription = null,
@@ -115,15 +115,20 @@ private fun Day(day: Day) {
                         fontWeight = FontWeight.Bold,
                         modifier = Modifier
                             .height(32.dp)
-                            .width(32.dp)
+                            .width(34.dp)
                             .wrapContentSize(Alignment.CenterEnd)
                     )
                     Spacer(modifier = Modifier.weight(1f))
 
-                    hour.precipitation?.let { Precipitation(precipitation = it) }
+                    hour.precipitation?.let {
+                        Precipitation(
+                            precipitation = it,
+                            MaterialTheme.typography.bodySmall.fontSize
+                        )
+                    }
                     with(hour.data.instant.details) {
                         Text(
-                            "$windSpeed${windSpeedOfGust?.let { " (${it})" }}",
+                            "$windSpeed${windSpeedOfGust?.let { " (${it})" } ?: ""}",
                             modifier = Modifier
                                 .height(32.dp)
                                 .wrapContentSize()
@@ -146,12 +151,15 @@ private fun Day(day: Day) {
 }
 
 @Composable
-private fun Precipitation(precipitation: Precipitation) {
+fun Precipitation(
+    precipitation: Precipitation,
+    fontSize: TextUnit = MaterialTheme.typography.titleMedium.fontSize,
+) {
     Text(
         text = precipitation.toString(),
         color = Color.Blue.copy(
-            precipitation.probability?.let { (it * 1.5f + 33) / 100 } ?: 1f),
-        style = MaterialTheme.typography.bodySmall,
+            precipitation.probability?.let { (it * 1.5f + 33).coerceAtMost(100f) / 100 } ?: 1f),
+        fontSize = fontSize,
         fontWeight = FontWeight.Bold,
     )
 }

@@ -55,14 +55,15 @@ fun WeatherData.toWeather(): Weather {
     return Weather(updateAt, coordinates, forecastByDay)
 }
 
-fun TimeSeries.getSymbol(): WeatherSymbol? = with(data) {
-    return@with when {
-        (next1Hours != null) -> next1Hours.summary.weatherSymbol
-        (next6Hours != null) -> next6Hours.summary.weatherSymbol
-        (next12Hours != null) -> next12Hours.summary.weatherSymbol
-        else -> null
+val TimeSeries.symbol: WeatherSymbol?
+    get() = with(data) {
+        return@with when {
+            (next1Hours != null) -> next1Hours.summary.weatherSymbol
+            (next6Hours != null) -> next6Hours.summary.weatherSymbol
+            (next12Hours != null) -> next12Hours.summary.weatherSymbol
+            else -> null
+        }
     }
-}
 
 val TimeSeries.precipitation: Precipitation?
     get() = with(data) {
@@ -88,7 +89,7 @@ private fun NextHoursDetails.getMinMaxPrecipitationAmount(): Precipitation? =
         )
     else null
 
-private fun LocalDate.toSimpleDate(): String {
+fun LocalDate.toSimpleDate(): String {
     val today = LocalDate.now()
     val dayOfWeek = when (today.dayOfWeek) {
         this.dayOfWeek -> "Idag"
