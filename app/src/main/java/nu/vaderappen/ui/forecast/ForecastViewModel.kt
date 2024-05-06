@@ -37,7 +37,6 @@ class ForecastViewModel(
     }
 
     companion object {
-
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
             @Suppress("UNCHECKED_CAST")
             override fun <T : ViewModel> create(
@@ -47,7 +46,6 @@ class ForecastViewModel(
                 // Get the Application object from extras
                 val application = checkNotNull(extras[APPLICATION_KEY])
                 val yr = YrService.create()
-
                 return ForecastViewModel(yr) as T
             }
         }

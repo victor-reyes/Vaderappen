@@ -36,8 +36,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import nu.vaderappen.ui.forecast.ForecastScreen
-import nu.vaderappen.ui.search.ROUTE_SEARCH
-import nu.vaderappen.ui.search.SearchScreen
+import nu.vaderappen.ui.location.ROUTE_SEARCH
+import nu.vaderappen.ui.location.SearchLocationScreen
 import nu.vaderappen.ui.theme.VäderappenTheme
 import nu.vaderappen.ui.today.TodayScreen
 
@@ -51,7 +51,7 @@ class MainActivity : ComponentActivity() {
                 val navController = rememberNavController()
                 val current by navController.currentBackStackEntryAsState()
                 Scaffold(
-                    topBar = { WeatherTopBar(navController) },
+                    topBar = { WeatherTopBar(current, navController) },
                     bottomBar = { WeatherNavBar(current, navController) }
                 ) {
                     Box(modifier = Modifier.padding(it)) {
@@ -64,20 +64,21 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     @OptIn(ExperimentalMaterial3Api::class)
-    private fun WeatherTopBar(navController: NavHostController) {
-        TopAppBar(
-            title = { Text(text = "Stockholm") },
-            modifier = Modifier.shadow(8.dp),
-            actions = {
-                IconButton(onClick = { navController.navigate(ROUTE_SEARCH) }) {
-                    Icon(
-                        imageVector = Icons.Filled.Search,
-                        contentDescription = "Sök"
-                    )
-                }
+    private fun WeatherTopBar(current: NavBackStackEntry?, navController: NavHostController) {
+        if (current?.destination?.route != ROUTE_SEARCH)
+            TopAppBar(
+                title = { Text(text = "Stockholm") },
+                modifier = Modifier.shadow(8.dp),
+                actions = {
+                    IconButton(onClick = { navController.navigate(ROUTE_SEARCH) }) {
+                        Icon(
+                            imageVector = Icons.Filled.Search,
+                            contentDescription = "Sök"
+                        )
+                    }
 
-            }
-        )
+                }
+            )
     }
 }
 
@@ -138,7 +139,7 @@ private fun WeatherNavHost(navHostController: NavHostController) {
             }
         }
         composable(route = ROUTE_SEARCH) {
-            SearchScreen()
+            SearchLocationScreen(onBackClicked = navHostController::popBackStack)
         }
     }
 }
