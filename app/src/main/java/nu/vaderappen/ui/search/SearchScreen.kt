@@ -20,6 +20,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 
+const val ROUTE_SEARCH = "search"
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun SearchScreen(

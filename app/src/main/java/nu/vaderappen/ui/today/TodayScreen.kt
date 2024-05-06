@@ -49,11 +49,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import nu.vaderappen.data.service.TimeSeries
-import nu.vaderappen.data.service.Weather
-import nu.vaderappen.data.service.precipitation
-import nu.vaderappen.data.service.symbol
-import nu.vaderappen.data.service.toSimpleDate
+import nu.vaderappen.data.service.weather.TimeSeries
+import nu.vaderappen.data.service.weather.Weather
+import nu.vaderappen.data.service.weather.precipitation
+import nu.vaderappen.data.service.weather.symbol
+import nu.vaderappen.data.service.weather.toSimpleDate
 import nu.vaderappen.test.TestData
 import nu.vaderappen.ui.forecast.ForecastUi
 import nu.vaderappen.ui.forecast.ForecastViewModel
@@ -227,7 +227,7 @@ fun UVIndexScale(uvIndex: Float, maxUVIndex: Float = 11f) {
 
     Surface(color = color, shape = CircleShape) {
         Text(
-            text = "UV-index: $uvIndex",
+            text = "UV: $uvIndex",
             color = MaterialTheme.colorScheme.contentColorFor(color),
             fontWeight = FontWeight.Bold,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)

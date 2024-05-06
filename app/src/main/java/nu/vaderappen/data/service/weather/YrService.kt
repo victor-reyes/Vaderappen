@@ -1,4 +1,4 @@
-package nu.vaderappen.data.service
+package nu.vaderappen.data.service.weather
 
 import com.squareup.moshi.Moshi
 import nu.vaderappen.BuildConfig

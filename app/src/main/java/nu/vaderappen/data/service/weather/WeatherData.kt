@@ -1,4 +1,4 @@
-package nu.vaderappen.data.service
+package nu.vaderappen.data.service.weather
 
 import com.squareup.moshi.FromJson
 import com.squareup.moshi.Json

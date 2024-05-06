@@ -36,10 +36,10 @@ import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import nu.vaderappen.data.service.Day
-import nu.vaderappen.data.service.Precipitation
-import nu.vaderappen.data.service.precipitation
-import nu.vaderappen.data.service.symbol
+import nu.vaderappen.data.service.weather.Day
+import nu.vaderappen.data.service.weather.Precipitation
+import nu.vaderappen.data.service.weather.precipitation
+import nu.vaderappen.data.service.weather.symbol
 import nu.vaderappen.test.TestData
 import nu.vaderappen.ui.theme.VäderappenTheme
 import java.util.Locale

@@ -1,9 +1,9 @@
 package nu.vaderappen.test
 
 import com.squareup.moshi.Moshi
-import nu.vaderappen.data.service.LocaleDateTimeAdapter
-import nu.vaderappen.data.service.WeatherData
-import nu.vaderappen.data.service.toWeather
+import nu.vaderappen.data.service.weather.LocaleDateTimeAdapter
+import nu.vaderappen.data.service.weather.WeatherData
+import nu.vaderappen.data.service.weather.toWeather
 
 val moshi = Moshi.Builder().add(LocaleDateTimeAdapter()).build()
 val testJson =

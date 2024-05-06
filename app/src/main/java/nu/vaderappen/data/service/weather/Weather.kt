@@ -1,4 +1,4 @@
-package nu.vaderappen.data.service
+package nu.vaderappen.data.service.weather
 
 import java.time.LocalDate
 import java.time.LocalDateTime

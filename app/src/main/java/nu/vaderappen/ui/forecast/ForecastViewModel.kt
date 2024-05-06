@@ -8,10 +8,10 @@ import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
-import nu.vaderappen.data.service.Weather
-import nu.vaderappen.data.service.YrService
-import nu.vaderappen.data.service.format
-import nu.vaderappen.data.service.toWeather
+import nu.vaderappen.data.service.weather.Weather
+import nu.vaderappen.data.service.weather.YrService
+import nu.vaderappen.data.service.weather.format
+import nu.vaderappen.data.service.weather.toWeather
 import nu.vaderappen.ui.forecast.ForecastUi.Forecast
 import nu.vaderappen.ui.forecast.ForecastUi.Loading
 import kotlin.random.Random
@@ -30,9 +30,8 @@ class ForecastViewModel(
             val latitude = (r.nextDouble() * 180 - 90).format(3);
             val longitude = (r.nextDouble() * 360 - 180).format(3)
             val barcelona = 41.390205 to 2.154007
-            val stockholm = 59.3103 to 18.1036
-            val weather = yr.getWeatherData(stockholm.first, stockholm.second)
-                .toWeather()
+            val stockholm = 59.31035436097886 to 18.10362393099789
+            val weather = yr.getWeatherData(stockholm.first, stockholm.second).toWeather()
             _forecastUi.emit(Forecast(weather))
         }
     }
@@ -48,7 +47,6 @@ class ForecastViewModel(
                 // Get the Application object from extras
                 val application = checkNotNull(extras[APPLICATION_KEY])
                 val yr = YrService.create()
-
 
                 return ForecastViewModel(yr) as T
             }
