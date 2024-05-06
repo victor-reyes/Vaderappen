@@ -1,8 +1,11 @@
 package nu.vaderappen.ui.today
 
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxHeight
@@ -13,13 +16,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.pager.HorizontalPager
+import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.sharp.Send
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -27,7 +36,10 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.rotate
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.buildAnnotatedString
@@ -37,7 +49,6 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
-import kotlinx.coroutines.launch
 import nu.vaderappen.data.service.TimeSeries
 import nu.vaderappen.data.service.Weather
 import nu.vaderappen.data.service.precipitation
@@ -65,40 +76,34 @@ private fun TodayScreen(forecastUi: ForecastUi) {
     }
 }
 
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Today(weather: Weather) {
     val scope = rememberCoroutineScope()
     Column(
-        modifier = Modifier
-            .fillMaxSize()
+        modifier = Modifier.fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally
     ) {
         val hours = weather.forecastByDay.flatMap { it.forecast }
-        val listState = rememberLazyListState()
-        val currentHour by remember {
-            derivedStateOf {
-                hours[listState.firstVisibleItemIndex + if (listState.firstVisibleItemScrollOffset > 0) 1 else 0]
-            }
-        }
+        val pagerState = rememberPagerState(pageCount = { hours.size })
+
+        val currentHour by remember { derivedStateOf { hours[pagerState.currentPage] } }
 
         HourForecast(currentHour)
-        LazyRow(
-            state = listState,
+        HorizontalPager(
+            state = pagerState,
+            pageSize = PageSize.Fixed(140.dp),
+            contentPadding = PaddingValues(horizontal = 120.dp),
+            pageSpacing = 8.dp
         ) {
-            items(hours.size, key = { hours[it].time }) { index ->
-                val hour = hours[index]
-                val colors = CardDefaults.elevatedCardColors().copy(
-                    containerColor =
-                    if (hour == currentHour) MaterialTheme.colorScheme.onPrimary
-                    else MaterialTheme.colorScheme.surface
+            val hour = hours[it]
+            val colors = CardDefaults.elevatedCardColors()
+                .copy(
+                    containerColor = if (currentHour == hour) MaterialTheme.colorScheme.surfaceContainerHighest
+                    else MaterialTheme.colorScheme.surfaceContainerLowest
                 )
-                ElevatedCard(
-                    onClick = { scope.launch { listState.animateScrollToItem(index) } },
-                    colors = colors,
-                    modifier = Modifier.padding(horizontal = 8.dp)
-                ) {
-                    CompactForecast(hour)
-                }
-
+            ElevatedCard(colors = colors, modifier = Modifier.height(140.dp)) {
+                CompactForecast(hour)
             }
         }
     }
@@ -108,12 +113,18 @@ private fun Today(weather: Weather) {
 private fun CompactForecast(hour: TimeSeries) {
     val date = hour.time.toLocalDate().toSimpleDate()
     val time = hour.time.toLocalTime().toString()
-    Column(modifier = Modifier.padding(4.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+    Column(
+        modifier = Modifier
+            .padding(4.dp)
+            .fillMaxSize(),
+        horizontalAlignment = Alignment.CenterHorizontally,
+        verticalArrangement = Arrangement.Center
+    ) {
         Text(
             text = date,
             fontWeight = FontWeight.Bold
         )
-        Text(text = time, modifier = Modifier.fillMaxWidth())
+        Text(text = time)
         Row(modifier = Modifier.height(IntrinsicSize.Max)) {
             hour.symbol?.drawableId?.let {
                 Image(
@@ -139,30 +150,120 @@ private fun CompactForecast(hour: TimeSeries) {
 private fun HourForecast(hour: TimeSeries) {
     val date = hour.time.toLocalDate().toSimpleDate()
     val time = hour.time.toLocalTime().toString()
-    Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-        Text(
-            text = date,
-            fontSize = MaterialTheme.typography.titleLarge.fontSize,
-            fontWeight = FontWeight.Bold
-        )
-        Text(text = time)
-        Row(modifier = Modifier.height(IntrinsicSize.Max)) {
-            hour.symbol?.drawableId?.let {
-                Image(
-                    painter = painterResource(id = it),
-                    contentDescription = null
-                )
+    OutlinedCard(
+        modifier = Modifier
+            .wrapContentSize()
+            .padding(8.dp),
+    ) {
+        Column(
+            modifier = Modifier
+                .wrapContentSize()
+                .padding(16.dp),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            Text(
+                text = date,
+                fontSize = MaterialTheme.typography.titleLarge.fontSize,
+                fontWeight = FontWeight.Bold
+            )
+            Text(text = time)
+            Row(modifier = Modifier.height(IntrinsicSize.Max)) {
+                hour.symbol?.drawableId?.let {
+                    Image(
+                        painter = painterResource(id = it),
+                        contentDescription = null
+                    )
+                }
+                with(hour.data.instant.details) {
+                    Temperature(
+                        airTemperature.roundToInt(),
+                        airTemperaturePercentile10?.roundToInt(),
+                        airTemperaturePercentile90?.roundToInt(),
+                    )
+                    Spacer(modifier = Modifier.width(32.dp))
+                    Wind(
+                        windSpeed.roundToInt(),
+                        windFromDirection.roundToInt(),
+                        windSpeedOfGust?.roundToInt()
+                    )
+                }
             }
+            hour.precipitation?.let { Precipitation(it) }
+                ?: Spacer(modifier = Modifier.height(32.dp))
+
             with(hour.data.instant.details) {
-                Temperature(
-                    airTemperature.roundToInt(),
-                    airTemperaturePercentile10?.roundToInt(),
-                    airTemperaturePercentile90?.roundToInt(),
+                Row {
+                    ultravioletIndexClearSky?.let { UVIndexScale(uvIndex = it.toFloat()) }
+                        ?: Spacer(modifier = Modifier.width(120.dp))
+                    Spacer(modifier = Modifier.weight(1f))
+                    Column {
+                        val fontWeight = FontWeight.Bold
+                        val fontSize = MaterialTheme.typography.bodySmall.fontSize
+                        Text(
+                            text = "Luftfuktighet: $relativeHumidity%",
+                            fontWeight = fontWeight, fontSize = fontSize
+                        )
+                        Text(
+                            text = "Lufttryck: $airPressureAtSeaLevel hPa",
+                            fontWeight = fontWeight, fontSize = fontSize
+                        )
+                    }
+                }
+            }
+        }
+    }
+}
+
+@Composable
+fun UVIndexScale(uvIndex: Float, maxUVIndex: Float = 11f) {
+    val color = when (uvIndex) {
+        in 0f..0.99f -> Color.LightGray
+        in 1f..2.5f -> Color(0xFF76FF03)
+        in 2.5f..5.5f -> Color(0xFFFFEB3B)
+        in 5.5f..7.5f -> Color(0xFFFF9800)
+        in 7.5f..10f -> Color(0xFFF44336)
+        else -> Color(0xFFD50000)
+    }
+
+    Surface(color = color, shape = CircleShape) {
+        Text(
+            text = "UV-index: $uvIndex",
+            color = MaterialTheme.colorScheme.contentColorFor(color),
+            fontWeight = FontWeight.Bold,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 4.dp)
+        )
+    }
+}
+
+@Composable
+private fun Wind(windSpeed: Int, windFromDirection: Int, windSpeedOfGust: Int? = null) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally) {
+        val windAnnotatedString = buildAnnotatedString {
+            append("Vind: ")
+            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                append("$windSpeed")
+            }
+            windSpeedOfGust?.let { append(" ($it)") }
+            withStyle(style = SpanStyle(fontWeight = FontWeight.Bold)) {
+                append(" m/s")
+            }
+        }
+        Text(windAnnotatedString)
+        Row {
+            repeat(3) {
+                Image(
+                    imageVector = Icons.Sharp.Send,
+                    contentDescription = null,
+                    contentScale = ContentScale.FillHeight,
+                    modifier = Modifier
+                        .size(32.dp)
+                        .rotate(windFromDirection.toFloat() + 90),
+                    colorFilter = ColorFilter.tint(Color.Green)
                 )
             }
         }
-        hour.precipitation?.let { Precipitation(it) } ?: Spacer(modifier = Modifier.height(32.dp))
     }
+
 }
 
 @Composable
