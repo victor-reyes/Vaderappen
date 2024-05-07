@@ -6,6 +6,7 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.room.Entity
+import androidx.room.PrimaryKey
 import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -38,8 +39,8 @@ class LocationViewModel(
             currentLocation
         ) { searched, faved, current ->
             LocationUiState.Success(
-                current,
-                searched.map { it.copy(isFaved = faved.contains(it)) },
+                current?.copy(isFaved = faved.find { current.fullName == it.fullName } != null),
+                searched.map { loc -> loc.copy(isFaved = faved.find { loc.fullName == it.fullName } != null) },
                 faved
             )
         }.stateIn(viewModelScope, SharingStarted.Lazily, LocationUiState.Loading)
@@ -49,8 +50,13 @@ class LocationViewModel(
         viewModelScope.launch {
 //            _locationState.emit(LocationUiState.Loading)
             val result = locationService.searchLocation(query)
-//            _locationState.emit(LocationUiState.Success(result.toUiModelLocation()))
             searchedLocations.emit(result.toUiModelLocation())
+        }
+    }
+
+    fun onFavedChange(location: Location, isFaved: Boolean) {
+        viewModelScope.launch {
+            locationRepository.upsert(location.copy(isFaved = isFaved))
         }
     }
 
@@ -95,9 +101,10 @@ sealed interface LocationUiState {
 }
 
 @JsonClass(generateAdapter = true)
-@Entity(primaryKeys = ["fullName", "latitude", "longitude"])
+@Entity
 data class Location(
     val name: String,
+    @PrimaryKey
     val fullName: String,
     val latitude: Double,
     val longitude: Double,

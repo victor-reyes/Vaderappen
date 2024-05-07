@@ -5,15 +5,21 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Favorite
+import androidx.compose.material.icons.filled.FavoriteBorder
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DockedSearchBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconToggleButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -46,7 +52,8 @@ fun SearchLocationScreen(
         onLocationSelected = {
             locationViewModel.onLocationSelected(it)
             onBackClicked()
-        }
+        },
+        onFavedChange = locationViewModel::onFavedChange
     )
 }
 
@@ -57,6 +64,7 @@ private fun SearchLocationScreen(
     onBackClicked: () -> Unit,
     onSearch: (String) -> Unit,
     onLocationSelected: (Location) -> Unit,
+    onFavedChange: (location: Location, isFaved: Boolean) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -76,12 +84,14 @@ private fun SearchLocationScreen(
                             .fillMaxWidth()
                             .wrapContentSize()
                     ) {
-                        println(locationUiState.searchedLocations)
                         items(
                             locationUiState.searchedLocations,
                             key = { Triple(it.fullName, it.latitude, it.longitude) }
                         ) { location ->
-                            Location(location, onClick = { onLocationSelected(location) })
+                            Location(location,
+                                onSelected = { onLocationSelected(location) },
+                                onFavedChange = { onFavedChange(location, it) }
+                            )
                         }
                     }
                 }
@@ -91,7 +101,12 @@ private fun SearchLocationScreen(
         Box(modifier = Modifier.padding(it)) {
             when (locationUiState) {
                 LocationUiState.Loading -> {}
-                is LocationUiState.Success -> Search(onLocationSelected = onLocationSelected)
+                is LocationUiState.Success -> Locations(
+                    currentLocation = locationUiState.currentLocation,
+                    favLocations = locationUiState.favedLocations,
+                    onLocationSelected = onLocationSelected,
+                    onFavedChange = onFavedChange
+                )
             }
         }
     }
@@ -100,45 +115,85 @@ private fun SearchLocationScreen(
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Search(
-    locations: List<Location> = testLocations,
+private fun Locations(
+    currentLocation: Location?,
+    favLocations: List<Location> = testLocations,
     onLocationSelected: (Location) -> Unit,
+    onFavedChange: (location: Location, isFaved: Boolean) -> Unit,
 ) {
-
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
-        stickyHeader("favs") {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .background(MaterialTheme.colorScheme.primary)
-            ) {
-                Text(
-                    text = "Favoriter", fontSize = 20.sp,
-                    color = MaterialTheme.colorScheme.onPrimary,
-                    modifier = Modifier.padding(16.dp)
+        if (currentLocation != null) {
+            stickyHeader("current") {
+                StickyHeader("Nuvarande")
+            }
+            item(key = currentLocation.fullName + "_current"){
+                Location(
+                    location = currentLocation,
+                    onSelected = { onLocationSelected(currentLocation) },
+                    onFavedChange = { onFavedChange(currentLocation, it) },
+                    modifier = Modifier.animateItemPlacement()
                 )
             }
         }
-        items(locations, key = { Triple(it.name, it.latitude, it.longitude) }) { location ->
-            Location(location, onClick = { onLocationSelected(location) })
+        stickyHeader("favs") {
+            StickyHeader()
         }
-
+        items(favLocations, key = { it.fullName}) { location ->
+            Location(
+                location = location,
+                onSelected = { onLocationSelected(location) },
+                onFavedChange = { onFavedChange(location, it) },
+                modifier = Modifier.animateItemPlacement()
+            )
+        }
     }
 }
 
 @Composable
-private fun Location(location: Location, onClick: () -> Unit) {
-    Column(
+private fun StickyHeader(title: String = "Favoriter") {
+    Box(
         modifier = Modifier
-            .padding(horizontal = 16.dp)
-            .clickable(onClick = onClick, role = Role.Button)
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.primary)
     ) {
-        Text(text = location.name)
         Text(
-            text = location.fullName,
-            fontSize = 10.sp,
-            color = MaterialTheme.colorScheme.secondary
+            text = title, fontSize = 20.sp,
+            color = MaterialTheme.colorScheme.onPrimary,
+            modifier = Modifier.padding(16.dp)
         )
+    }
+}
+
+@Composable
+private fun Location(
+    location: Location,
+    modifier: Modifier = Modifier,
+    onSelected: () -> Unit,
+    onFavedChange: (Boolean) -> Unit,
+) {
+    Column(
+        modifier = modifier
+            .padding(horizontal = 16.dp)
+            .clickable(onClick = onSelected, role = Role.Button)
+    ) {
+        Row {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(text = location.name)
+                Text(
+                    text = location.fullName,
+                    fontSize = 10.sp,
+                    color = MaterialTheme.colorScheme.secondary
+                )
+            }
+            var checked by remember { mutableStateOf(false) }
+            IconToggleButton(checked = location.isFaved, onCheckedChange = onFavedChange) {
+                Icon(
+                    imageVector = if (location.isFaved) Icons.Filled.Favorite else Icons.Filled.FavoriteBorder,
+                    contentDescription = "Fav"
+                )
+            }
+        }
+
         HorizontalDivider(thickness = Dp.Hairline)
     }
 }

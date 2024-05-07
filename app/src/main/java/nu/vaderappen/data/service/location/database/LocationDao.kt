@@ -2,19 +2,15 @@ package nu.vaderappen.data.service.location.database
 
 import androidx.room.Dao
 import androidx.room.Delete
-import androidx.room.Insert
 import androidx.room.Query
-import androidx.room.Update
+import androidx.room.Upsert
 import kotlinx.coroutines.flow.Flow
 import nu.vaderappen.ui.location.Location
 
 @Dao
 interface LocationDao {
-    @Insert
-    suspend fun insert(location: Location)
-
-    @Update
-    suspend fun update(location: Location)
+    @Upsert
+    suspend fun upsert(location: Location)
 
     @Query("SELECT * FROM Location")
     fun getAllLocations(): Flow<List<Location>>
@@ -23,7 +19,7 @@ interface LocationDao {
     fun getFavedLocations(): Flow<List<Location>>
 
     @Delete
-    suspend fun deleteLocations(vararg locations: Location)
+    suspend fun delete(vararg locations: Location)
 }
 
 
