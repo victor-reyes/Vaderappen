@@ -2,7 +2,9 @@ package nu.vaderappen.ui.today
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.PaddingValues
@@ -18,6 +20,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
+import androidx.compose.foundation.pager.PagerState
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
@@ -30,6 +33,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
@@ -84,16 +88,40 @@ private fun Today(weather: Weather) {
     ) {
         val hours = weather.forecastByDay.flatMap { it.forecast }
         val pagerState = rememberPagerState(pageCount = { hours.size })
-
+        LaunchedEffect(key1 = weather) {
+            pagerState.scrollToPage(0)
+        }
         val currentHourIndex by remember { derivedStateOf { pagerState.currentPage } }
         val currentHour = hours[currentHourIndex]
 
         HourForecast(currentHour)
+        Spacer(modifier = Modifier.weight(1f))
+        PerHourPager(pagerState, hours, currentHour)
+    }
+}
+
+@Composable
+@OptIn(ExperimentalFoundationApi::class)
+private fun PerHourPager(
+    pagerState: PagerState,
+    hours: List<TimeSeries>,
+    currentHour: TimeSeries,
+) {
+    Column(modifier = Modifier.padding(vertical = 8.dp)) {
+        Box(modifier = Modifier
+            .fillMaxWidth()
+            .background(MaterialTheme.colorScheme.primary)) {
+            Text(
+                "Timme för timme: ",
+                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                color = MaterialTheme.colorScheme.contentColorFor(MaterialTheme.colorScheme.primary)
+            )
+        }
         HorizontalPager(
             state = pagerState,
             pageSize = PageSize.Fixed(140.dp),
             contentPadding = PaddingValues(horizontal = 120.dp),
-            pageSpacing = 8.dp
+            pageSpacing = 8.dp,
         ) {
             val hour = hours[it]
             val colors = CardDefaults.elevatedCardColors()
