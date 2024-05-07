@@ -25,8 +25,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -35,6 +37,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import kotlinx.coroutines.flow.map
+import nu.vaderappen.data.service.prefs.PrefsRepository
+import nu.vaderappen.data.service.prefs.dataStore
 import nu.vaderappen.ui.forecast.ForecastScreen
 import nu.vaderappen.ui.location.ROUTE_SEARCH
 import nu.vaderappen.ui.location.SearchLocationScreen
@@ -42,16 +47,18 @@ import nu.vaderappen.ui.theme.VäderappenTheme
 import nu.vaderappen.ui.today.TodayScreen
 
 class MainActivity : ComponentActivity() {
-    @OptIn(ExperimentalMaterial3Api::class)
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
+            val prefsRepository = PrefsRepository(LocalContext.current.dataStore)
+            val location by prefsRepository.location.map { it.name }
+                .collectAsStateWithLifecycle(initialValue = "")
             VäderappenTheme {
                 val navController = rememberNavController()
                 val current by navController.currentBackStackEntryAsState()
                 Scaffold(
-                    topBar = { WeatherTopBar(current, navController) },
+                    topBar = { WeatherTopBar(location, current, navController) },
                     bottomBar = { WeatherNavBar(current, navController) }
                 ) {
                     Box(modifier = Modifier.padding(it)) {
@@ -64,10 +71,14 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     @OptIn(ExperimentalMaterial3Api::class)
-    private fun WeatherTopBar(current: NavBackStackEntry?, navController: NavHostController) {
+    private fun WeatherTopBar(
+        currentLocation: String,
+        current: NavBackStackEntry?,
+        navController: NavHostController,
+    ) {
         if (current?.destination?.route != ROUTE_SEARCH)
             TopAppBar(
-                title = { Text(text = "Stockholm") },
+                title = { Text(text = currentLocation) },
                 modifier = Modifier.shadow(8.dp),
                 actions = {
                     IconButton(onClick = { navController.navigate(ROUTE_SEARCH) }) {

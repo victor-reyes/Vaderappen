@@ -33,7 +33,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.rotate
@@ -72,14 +71,13 @@ fun TodayScreen(viewModel: ForecastViewModel = viewModel(factory = ForecastViewM
 private fun TodayScreen(forecastUi: ForecastUi) {
     when (forecastUi) {
         is ForecastUi.Loading -> {}
-        is ForecastUi.Forecast -> Today(forecastUi.weather)
+        is ForecastUi.Success -> Today(forecastUi.weather)
     }
 }
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun Today(weather: Weather) {
-    val scope = rememberCoroutineScope()
     Column(
         modifier = Modifier.fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally
@@ -87,7 +85,8 @@ private fun Today(weather: Weather) {
         val hours = weather.forecastByDay.flatMap { it.forecast }
         val pagerState = rememberPagerState(pageCount = { hours.size })
 
-        val currentHour by remember { derivedStateOf { hours[pagerState.currentPage] } }
+        val currentHourIndex by remember { derivedStateOf { pagerState.currentPage } }
+        val currentHour = hours[currentHourIndex]
 
         HourForecast(currentHour)
         HorizontalPager(

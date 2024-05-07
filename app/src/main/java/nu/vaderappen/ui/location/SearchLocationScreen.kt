@@ -42,7 +42,11 @@ fun SearchLocationScreen(
     SearchLocationScreen(
         locationUiState = locationUiState,
         onBackClicked = onBackClicked,
-        onSearch = locationViewModel::searchLocation
+        onSearch = locationViewModel::searchLocation,
+        onLocationSelected = {
+            locationViewModel.onLocationSelected(it)
+            onBackClicked()
+        }
     )
 }
 
@@ -52,7 +56,7 @@ private fun SearchLocationScreen(
     locationUiState: LocationUiState,
     onBackClicked: () -> Unit,
     onSearch: (String) -> Unit,
-    onLocationSelected: (Location) -> Unit = {},
+    onLocationSelected: (Location) -> Unit,
 ) {
     Scaffold(
         topBar = {
@@ -72,9 +76,9 @@ private fun SearchLocationScreen(
                             .fillMaxWidth()
                             .wrapContentSize()
                     ) {
-                        println(locationUiState.locations)
+                        println(locationUiState.searchedLocations)
                         items(
-                            locationUiState.locations,
+                            locationUiState.searchedLocations,
                             key = { Triple(it.fullName, it.latitude, it.longitude) }
                         ) { location ->
                             Location(location, onClick = { onLocationSelected(location) })

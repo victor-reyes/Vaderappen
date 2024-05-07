@@ -5,28 +5,60 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
+import androidx.room.Entity
+import com.squareup.moshi.JsonClass
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 import nu.vaderappen.data.service.location.LocationService
+import nu.vaderappen.data.service.location.database.LocationDatabase
+import nu.vaderappen.data.service.location.database.LocationRepository
+import nu.vaderappen.data.service.prefs.PrefsRepository
+import nu.vaderappen.data.service.prefs.dataStore
 
-class LocationViewModel(private val locationService: LocationService) : ViewModel() {
+class LocationViewModel(
+    private val locationService: LocationService,
+    private val locationRepository: LocationRepository,
+    private val prefsRepository: PrefsRepository,
+) : ViewModel() {
+    val locationUiState: StateFlow<LocationUiState>
 
-    private val _locationState =
-        MutableStateFlow<LocationUiState>(LocationUiState.Success(emptyList()))
-    val locationUiState: StateFlow<LocationUiState> = _locationState.asStateFlow()
+    private val searchedLocations = MutableStateFlow<List<Location>>(emptyList())
+
+    init {
+        val currentLocation =
+            prefsRepository.location.stateIn(viewModelScope, SharingStarted.Lazily, null)
+        val favedLocations = locationRepository.getFavedLocations()
+        locationUiState = combine(
+            searchedLocations,
+            favedLocations,
+            currentLocation
+        ) { searched, faved, current ->
+            LocationUiState.Success(
+                current,
+                searched.map { it.copy(isFaved = faved.contains(it)) },
+                faved
+            )
+        }.stateIn(viewModelScope, SharingStarted.Lazily, LocationUiState.Loading)
+    }
 
     fun searchLocation(query: String) {
         viewModelScope.launch {
-            _locationState.emit(LocationUiState.Loading)
+//            _locationState.emit(LocationUiState.Loading)
             val result = locationService.searchLocation(query)
-            _locationState.emit(LocationUiState.Success(result.toUiModelLocation()))
+//            _locationState.emit(LocationUiState.Success(result.toUiModelLocation()))
+            searchedLocations.emit(result.toUiModelLocation())
         }
     }
 
     fun onLocationSelected(location: Location) {
-        
+        searchedLocations.value = emptyList()
+        viewModelScope.launch {
+            prefsRepository.saveLocation(location)
+        }
     }
 
     companion object {
@@ -39,7 +71,14 @@ class LocationViewModel(private val locationService: LocationService) : ViewMode
                 // Get the Application object from extras
                 val application = checkNotNull(extras[APPLICATION_KEY])
                 val locationService = LocationService.create()
-                return LocationViewModel(locationService) as T
+                val database = LocationDatabase.getInstance(application)
+                val locationRepository = LocationRepository(database.locationDao())
+                val prefsRepository = PrefsRepository(application.dataStore)
+                return LocationViewModel(
+                    locationService = locationService,
+                    locationRepository = locationRepository,
+                    prefsRepository = prefsRepository,
+                ) as T
             }
         }
     }
@@ -48,14 +87,21 @@ class LocationViewModel(private val locationService: LocationService) : ViewMode
 
 sealed interface LocationUiState {
     data object Loading : LocationUiState
-    data class Success(val locations: List<Location>) : LocationUiState
+    data class Success(
+        val currentLocation: Location?,
+        val searchedLocations: List<Location>,
+        val favedLocations: List<Location>,
+    ) : LocationUiState
 }
 
+@JsonClass(generateAdapter = true)
+@Entity(primaryKeys = ["fullName", "latitude", "longitude"])
 data class Location(
     val name: String,
     val fullName: String,
     val latitude: Double,
     val longitude: Double,
+    val isFaved: Boolean = false,
 )
 
 private fun nu.vaderappen.data.service.location.Location.toUiModelLocation() = features.map {

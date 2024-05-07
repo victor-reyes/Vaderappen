@@ -55,7 +55,7 @@ fun ForecastScreen(viewModel: ForecastViewModel = viewModel(factory = ForecastVi
 @Composable
 private fun ForecastScreen(forecastUi: ForecastUi) {
     when (forecastUi) {
-        is ForecastUi.Forecast -> {
+        is ForecastUi.Success -> {
             LazyColumn(
                 contentPadding = PaddingValues(8.dp),
             ) {
@@ -169,7 +169,7 @@ fun Precipitation(
 @Preview(uiMode = Configuration.UI_MODE_NIGHT_YES)
 @Composable
 fun ForecestScreenPreview() {
-    val uiState = ForecastUi.Forecast(weather = TestData.weather)
+    val uiState = ForecastUi.Success(weather = TestData.weather)
     VäderappenTheme {
         Surface {
             ForecastScreen(forecastUi = uiState)

@@ -5,25 +5,31 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
-import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.stateIn
+import nu.vaderappen.data.service.prefs.PrefsRepository
+import nu.vaderappen.data.service.prefs.dataStore
 import nu.vaderappen.data.service.weather.Weather
 import nu.vaderappen.data.service.weather.YrService
-import nu.vaderappen.data.service.weather.format
 import nu.vaderappen.data.service.weather.toWeather
-import nu.vaderappen.ui.forecast.ForecastUi.Forecast
 import nu.vaderappen.ui.forecast.ForecastUi.Loading
-import kotlin.random.Random
 
 class ForecastViewModel(
     val yr: YrService,
+    val prefsRepository: PrefsRepository,
 ) : ViewModel() {
 
-    private val _forecastUi: MutableStateFlow<ForecastUi> = MutableStateFlow(Loading)
-    val forecastUi = _forecastUi.asStateFlow()
+    val forecastUi = prefsRepository.location.map {
+        val weather = yr.getWeatherData(
+            latitude = it.latitude,
+            longitude = it.longitude
+        )
+            .toWeather()
+        ForecastUi.Success(weather)
+    }.stateIn(viewModelScope, SharingStarted.Lazily, Loading)
 
-    init {
+    /*init {
         viewModelScope.launch {
             val r = Random
 
@@ -34,7 +40,7 @@ class ForecastViewModel(
             val weather = yr.getWeatherData(stockholm.first, stockholm.second).toWeather()
             _forecastUi.emit(Forecast(weather))
         }
-    }
+    }*/
 
     companion object {
         val Factory: ViewModelProvider.Factory = object : ViewModelProvider.Factory {
@@ -46,7 +52,11 @@ class ForecastViewModel(
                 // Get the Application object from extras
                 val application = checkNotNull(extras[APPLICATION_KEY])
                 val yr = YrService.create()
-                return ForecastViewModel(yr) as T
+                val prefsRepository = PrefsRepository(application.dataStore)
+                return ForecastViewModel(
+                    yr = yr,
+                    prefsRepository = prefsRepository
+                ) as T
             }
         }
     }
@@ -55,5 +65,5 @@ class ForecastViewModel(
 
 sealed interface ForecastUi {
     data object Loading : ForecastUi
-    data class Forecast(val weather: Weather) : ForecastUi
+    data class Success(val weather: Weather) : ForecastUi
 }
