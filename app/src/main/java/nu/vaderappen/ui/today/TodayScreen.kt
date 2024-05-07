@@ -21,8 +21,11 @@ import androidx.compose.foundation.layout.wrapContentSize
 import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.PageSize
 import androidx.compose.foundation.pager.PagerState
+import androidx.compose.foundation.pager.VerticalPager
 import androidx.compose.foundation.pager.rememberPagerState
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.sharp.Send
 import androidx.compose.material3.CardDefaults
@@ -31,6 +34,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedCard
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.adaptive.currentWindowAdaptiveInfo
 import androidx.compose.material3.contentColorFor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -52,6 +56,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.window.core.layout.WindowSizeClass
+import androidx.window.core.layout.WindowWidthSizeClass
 import nu.vaderappen.data.service.weather.TimeSeries
 import nu.vaderappen.data.service.weather.Weather
 import nu.vaderappen.data.service.weather.precipitation
@@ -81,23 +87,37 @@ private fun TodayScreen(forecastUi: ForecastUi) {
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun Today(weather: Weather) {
-    Column(
-        modifier = Modifier.fillMaxSize(),
-        horizontalAlignment = Alignment.CenterHorizontally
-    ) {
-        val hours = weather.forecastByDay.flatMap { it.forecast }
-        val pagerState = rememberPagerState(pageCount = { hours.size })
-        LaunchedEffect(key1 = weather) {
-            pagerState.scrollToPage(0)
-        }
-        val currentHourIndex by remember { derivedStateOf { pagerState.currentPage } }
-        val currentHour = hours[currentHourIndex]
+private fun Today(
+    weather: Weather,
+    windowSizeClass: WindowSizeClass = currentWindowAdaptiveInfo().windowSizeClass,
+) {
+    val isLargeScreen = windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT
 
-        HourForecast(currentHour)
-        Spacer(modifier = Modifier.weight(1f))
-        PerHourPager(pagerState, hours, currentHour)
+    println("Large Screen: $isLargeScreen ${windowSizeClass.windowWidthSizeClass}")
+
+    val hours = weather.forecastByDay.flatMap { it.forecast }
+    val pagerState = rememberPagerState(pageCount = { hours.size })
+    LaunchedEffect(key1 = weather) {
+        pagerState.scrollToPage(0)
     }
+    val currentHourIndex by remember { derivedStateOf { pagerState.currentPage } }
+    val currentHour = hours[currentHourIndex]
+
+    if (isLargeScreen) {
+        Row {
+            PerHourPager(pagerState, hours, currentHour, true)
+            Spacer(modifier = Modifier.weight(1f))
+            HourForecast(currentHour)
+        }
+    } else
+        Column(
+            modifier = Modifier.fillMaxSize(),
+            horizontalAlignment = Alignment.CenterHorizontally
+        ) {
+            HourForecast(currentHour)
+            Spacer(modifier = Modifier.weight(1f))
+            PerHourPager(pagerState, hours, currentHour)
+        }
 }
 
 @Composable
@@ -106,34 +126,65 @@ private fun PerHourPager(
     pagerState: PagerState,
     hours: List<TimeSeries>,
     currentHour: TimeSeries,
+    isLargeScreen: Boolean = false,
 ) {
-    Column(modifier = Modifier.padding(vertical = 8.dp)) {
-        Box(modifier = Modifier
-            .fillMaxWidth()
-            .background(MaterialTheme.colorScheme.primary)) {
-            Text(
-                "Timme för timme: ",
-                modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
-                color = MaterialTheme.colorScheme.contentColorFor(MaterialTheme.colorScheme.primary)
+    if (isLargeScreen) {
+        Row {
+            VerticalPager(
+                state = pagerState,
+                pageSize = PageSize.Fixed(140.dp),
+                contentPadding = PaddingValues(vertical = 120.dp),
+                pageSpacing = 8.dp,
+            ) {
+                val hour = hours[it]
+                val colors = CardDefaults.elevatedCardColors()
+                    .copy(
+                        containerColor = if (currentHour == hour) MaterialTheme.colorScheme.surfaceContainerHighest
+                        else MaterialTheme.colorScheme.surfaceContainerLowest
+                    )
+                ElevatedCard(colors = colors, modifier = Modifier.width(140.dp)) {
+                    CompactForecast(hour)
+                }
+            }
+            Box(
+                modifier = Modifier
+                    .fillMaxHeight()
+                    .width(4.dp)
+                    .background(MaterialTheme.colorScheme.primary)
             )
         }
-        HorizontalPager(
-            state = pagerState,
-            pageSize = PageSize.Fixed(140.dp),
-            contentPadding = PaddingValues(horizontal = 120.dp),
-            pageSpacing = 8.dp,
-        ) {
-            val hour = hours[it]
-            val colors = CardDefaults.elevatedCardColors()
-                .copy(
-                    containerColor = if (currentHour == hour) MaterialTheme.colorScheme.surfaceContainerHighest
-                    else MaterialTheme.colorScheme.surfaceContainerLowest
+
+
+    } else
+        Column(modifier = Modifier.padding(vertical = 8.dp)) {
+            Box(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .background(MaterialTheme.colorScheme.primary)
+            ) {
+                Text(
+                    "Timme för timme: ",
+                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 8.dp),
+                    color = MaterialTheme.colorScheme.contentColorFor(MaterialTheme.colorScheme.primary)
                 )
-            ElevatedCard(colors = colors, modifier = Modifier.height(140.dp)) {
-                CompactForecast(hour)
+            }
+            HorizontalPager(
+                state = pagerState,
+                pageSize = PageSize.Fixed(140.dp),
+                contentPadding = PaddingValues(horizontal = 120.dp),
+                pageSpacing = 8.dp,
+            ) {
+                val hour = hours[it]
+                val colors = CardDefaults.elevatedCardColors()
+                    .copy(
+                        containerColor = if (currentHour == hour) MaterialTheme.colorScheme.surfaceContainerHighest
+                        else MaterialTheme.colorScheme.surfaceContainerLowest
+                    )
+                ElevatedCard(colors = colors, modifier = Modifier.height(140.dp)) {
+                    CompactForecast(hour)
+                }
             }
         }
-    }
 }
 
 @Composable
@@ -180,6 +231,7 @@ private fun HourForecast(hour: TimeSeries) {
     OutlinedCard(
         modifier = Modifier
             .wrapContentSize()
+            .verticalScroll(rememberScrollState())
             .padding(8.dp),
     ) {
         Column(
@@ -194,29 +246,31 @@ private fun HourForecast(hour: TimeSeries) {
                 fontWeight = FontWeight.Bold
             )
             Text(text = time)
-            Row(modifier = Modifier.height(IntrinsicSize.Max)) {
-                hour.symbol?.drawableId?.let {
-                    Image(
-                        painter = painterResource(id = it),
-                        contentDescription = null
-                    )
+            Column {
+                Row(modifier = Modifier.height(IntrinsicSize.Max)) {
+                    hour.symbol?.drawableId?.let {
+                        Image(
+                            painter = painterResource(id = it),
+                            contentDescription = null
+                        )
+                    }
+                    with(hour.data.instant.details) {
+                        Temperature(
+                            airTemperature.roundToInt(),
+                            airTemperaturePercentile10?.roundToInt(),
+                            airTemperaturePercentile90?.roundToInt(),
+                        )
+                        Spacer(modifier = Modifier.weight(1f))
+                        Wind(
+                            windSpeed.roundToInt(),
+                            windFromDirection.roundToInt(),
+                            windSpeedOfGust?.roundToInt()
+                        )
+                    }
                 }
-                with(hour.data.instant.details) {
-                    Temperature(
-                        airTemperature.roundToInt(),
-                        airTemperaturePercentile10?.roundToInt(),
-                        airTemperaturePercentile90?.roundToInt(),
-                    )
-                    Spacer(modifier = Modifier.width(32.dp))
-                    Wind(
-                        windSpeed.roundToInt(),
-                        windFromDirection.roundToInt(),
-                        windSpeedOfGust?.roundToInt()
-                    )
-                }
+                hour.precipitation?.let { Precipitation(it) }
+                    ?: Spacer(modifier = Modifier.height(32.dp))
             }
-            hour.precipitation?.let { Precipitation(it) }
-                ?: Spacer(modifier = Modifier.height(32.dp))
 
             with(hour.data.instant.details) {
                 Row {

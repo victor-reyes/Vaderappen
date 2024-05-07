@@ -75,7 +75,9 @@ private fun SearchLocationScreen(
                 onQueryChange = { query = it },
                 onSearch = { onSearch(query) },
                 active = active,
+                placeholder = { Text(text = "Sök")},
                 onActiveChange = { active = it },
+                modifier = Modifier.fillMaxWidth().padding(8.dp)
             ) {
                 when (locationUiState) {
                     LocationUiState.Loading -> CircularProgressIndicator()
@@ -117,7 +119,7 @@ private fun SearchLocationScreen(
 @Composable
 private fun Locations(
     currentLocation: Location?,
-    favLocations: List<Location> = testLocations,
+    favLocations: List<Location>,
     onLocationSelected: (Location) -> Unit,
     onFavedChange: (location: Location, isFaved: Boolean) -> Unit,
 ) {
@@ -197,13 +199,3 @@ private fun Location(
         HorizontalDivider(thickness = Dp.Hairline)
     }
 }
-
-
-val testLocations = listOf(
-    Location("New York", "New York", 40.7128, 74.0060),
-    Location("Barcelona", "Barcelona", 41.3851, 2.1734),
-    Location("London", "London", 51.5074, -0.1278),
-    Location("Paris", "Paris", 48.8566, 2.3522),
-    Location("Rome", "Rome", 41.9028, 12.4964),
-    Location("Stockholm", "Stockholm", 59.3293, 18.0686),
-)

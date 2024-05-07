@@ -87,7 +87,6 @@ class MainActivity : ComponentActivity() {
                             contentDescription = "Sök"
                         )
                     }
-
                 }
             )
     }

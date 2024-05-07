@@ -50,13 +50,20 @@ class LocationViewModel(
         viewModelScope.launch {
 //            _locationState.emit(LocationUiState.Loading)
             val result = locationService.searchLocation(query)
-            searchedLocations.emit(result.toUiModelLocation())
+                .toUiModelLocation()
+                .toSet()
+                .toList()
+            searchedLocations.emit(result)
         }
     }
 
     fun onFavedChange(location: Location, isFaved: Boolean) {
         viewModelScope.launch {
-            locationRepository.upsert(location.copy(isFaved = isFaved))
+            if (isFaved)
+                locationRepository.upsert(location.copy(isFaved = isFaved))
+            else {
+                locationRepository.delete(location)
+            }
         }
     }
 
