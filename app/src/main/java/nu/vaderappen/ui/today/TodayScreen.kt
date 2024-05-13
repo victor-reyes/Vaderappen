@@ -93,8 +93,6 @@ private fun Today(
 ) {
     val isLargeScreen = windowSizeClass.windowWidthSizeClass != WindowWidthSizeClass.COMPACT
 
-    println("Large Screen: $isLargeScreen ${windowSizeClass.windowWidthSizeClass}")
-
     val hours = weather.forecastByDay.flatMap { it.forecast }
     val pagerState = rememberPagerState(pageCount = { hours.size })
     LaunchedEffect(key1 = weather) {

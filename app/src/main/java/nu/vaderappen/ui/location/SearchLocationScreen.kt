@@ -49,8 +49,8 @@ fun SearchLocationScreen(
         locationUiState = locationUiState,
         onBackClicked = onBackClicked,
         onSearch = locationViewModel::searchLocation,
-        onLocationSelected = {
-            locationViewModel.onLocationSelected(it)
+        onLocationSelected = { location, isGps ->
+            locationViewModel.onLocationSelected(location, isGps)
             onBackClicked()
         },
         onFavedChange = locationViewModel::onFavedChange
@@ -63,7 +63,7 @@ private fun SearchLocationScreen(
     locationUiState: LocationUiState,
     onBackClicked: () -> Unit,
     onSearch: (String) -> Unit,
-    onLocationSelected: (Location) -> Unit,
+    onLocationSelected: (location: Location, isGps: Boolean) -> Unit,
     onFavedChange: (location: Location, isFaved: Boolean) -> Unit,
 ) {
     Scaffold(
@@ -75,9 +75,11 @@ private fun SearchLocationScreen(
                 onQueryChange = { query = it },
                 onSearch = { onSearch(query) },
                 active = active,
-                placeholder = { Text(text = "Sök")},
+                placeholder = { Text(text = "Sök") },
                 onActiveChange = { active = it },
-                modifier = Modifier.fillMaxWidth().padding(8.dp)
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(8.dp)
             ) {
                 when (locationUiState) {
                     LocationUiState.Loading -> CircularProgressIndicator()
@@ -91,7 +93,7 @@ private fun SearchLocationScreen(
                             key = { Triple(it.fullName, it.latitude, it.longitude) }
                         ) { location ->
                             Location(location,
-                                onSelected = { onLocationSelected(location) },
+                                onSelected = { onLocationSelected(location, false) },
                                 onFavedChange = { onFavedChange(location, it) }
                             )
                         }
@@ -120,7 +122,7 @@ private fun SearchLocationScreen(
 private fun Locations(
     currentLocation: Location?,
     favLocations: List<Location>,
-    onLocationSelected: (Location) -> Unit,
+    onLocationSelected: (location: Location, isGps: Boolean) -> Unit,
     onFavedChange: (location: Location, isFaved: Boolean) -> Unit,
 ) {
     LazyColumn(modifier = Modifier.fillMaxWidth()) {
@@ -128,10 +130,10 @@ private fun Locations(
             stickyHeader("current") {
                 StickyHeader("Nuvarande")
             }
-            item(key = currentLocation.fullName + "_current"){
+            item(key = currentLocation.fullName + "_current") {
                 Location(
                     location = currentLocation,
-                    onSelected = { onLocationSelected(currentLocation) },
+                    onSelected = { onLocationSelected(currentLocation, true) },
                     onFavedChange = { onFavedChange(currentLocation, it) },
                     modifier = Modifier.animateItemPlacement()
                 )
@@ -140,10 +142,10 @@ private fun Locations(
         stickyHeader("favs") {
             StickyHeader()
         }
-        items(favLocations, key = { it.fullName}) { location ->
+        items(favLocations, key = { it.fullName }) { location ->
             Location(
                 location = location,
-                onSelected = { onLocationSelected(location) },
+                onSelected = { onLocationSelected(location, false) },
                 onFavedChange = { onFavedChange(location, it) },
                 modifier = Modifier.animateItemPlacement()
             )

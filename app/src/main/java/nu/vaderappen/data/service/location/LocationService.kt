@@ -1,6 +1,7 @@
 package nu.vaderappen.data.service.location
 
 import com.squareup.moshi.Moshi
+import com.squareup.moshi.adapters.PolymorphicJsonAdapterFactory
 import nu.vaderappen.BuildConfig
 import okhttp3.OkHttpClient
 import retrofit2.Retrofit
@@ -15,6 +16,15 @@ interface LocationService {
         @Query("q") query: String,
         @Query("format") format: String = "geojson",
     ): Location
+
+
+    @GET("reverse?format=geojson")
+    suspend fun getReverseGeoCoding(
+        @Query("lat") latitude: Double,
+        @Query("lon") longitude: Double,
+        @Query("zoom") zoom: Int = 15
+    ): ReverseLocation
+
 
     companion object {
         private const val BASE_URL = "https://nominatim.openstreetmap.org/"
@@ -35,7 +45,14 @@ interface LocationService {
                 .build()
 
 
-            val moshi = Moshi.Builder().build()
+            val moshi = Moshi.Builder()
+                .add(
+                    PolymorphicJsonAdapterFactory.of(ReverseLocation::class.java, "type")
+                        .withSubtype(ReverseLocation.Location::class.java, "Success")
+                        .withSubtype(ReverseLocation.Error::class.java, "Error")
+                )
+                .build()
+
 
             val retrofit = Retrofit.Builder()
                 .client(client)

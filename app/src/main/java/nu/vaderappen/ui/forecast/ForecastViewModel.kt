@@ -6,7 +6,9 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import kotlinx.coroutines.flow.SharingStarted
+import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.onEach
 import kotlinx.coroutines.flow.stateIn
 import nu.vaderappen.data.service.prefs.PrefsRepository
 import nu.vaderappen.data.service.prefs.dataStore
@@ -20,14 +22,17 @@ class ForecastViewModel(
     val prefsRepository: PrefsRepository,
 ) : ViewModel() {
 
-    val forecastUi = prefsRepository.location.map {
-        val weather = yr.getWeatherData(
-            latitude = it.latitude,
-            longitude = it.longitude
-        )
-            .toWeather()
-        ForecastUi.Success(weather)
-    }.stateIn(viewModelScope, SharingStarted.Lazily, Loading)
+    val forecastUi = prefsRepository.location
+        .onEach { println("Location: $it") }
+        .filterNotNull()
+        .map {
+            val weather = yr.getWeatherData(
+                latitude = it.latitude,
+                longitude = it.longitude
+            )
+                .toWeather()
+            ForecastUi.Success(weather)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), Loading)
 
     /*init {
         viewModelScope.launch {
