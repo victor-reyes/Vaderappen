@@ -101,9 +101,9 @@ private fun NextHoursDetails.getMinMaxPrecipitationAmount(): Precipitation? =
 
 fun LocalDate.toSimpleDate(): String {
     val today = LocalDate.now()
-    val dayOfWeek = when (today.dayOfWeek) {
-        this.dayOfWeek -> "Idag"
-        this.dayOfWeek - 1 -> "Imorgon"
+    val dayOfWeek = when (today.dayOfYear) {
+        this.dayOfYear -> "Idag"
+        this.dayOfYear - 1 -> "Imorgon"
         else -> this.dayOfWeek.getDisplayName(TextStyle.SHORT, Locale.getDefault())
     }
     val date = "$dayOfMonth ${month.getDisplayName(TextStyle.SHORT, Locale.getDefault())}"
