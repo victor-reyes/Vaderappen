@@ -94,4 +94,7 @@ dependencies {
 
     // accompanist permissions
     implementation(libs.accompanist.permissions)
+
+    // task to coroutine
+    implementation(libs.kotlinx.coroutines.play.services)
 }

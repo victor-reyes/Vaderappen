@@ -3,23 +3,20 @@ package nu.vaderappen.ui.location
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import com.google.accompanist.permissions.ExperimentalPermissionsApi
-import com.google.accompanist.permissions.rememberMultiplePermissionsState
+import com.google.accompanist.permissions.MultiplePermissionsState
+import com.google.accompanist.permissions.isGranted
 
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
-fun LocationDialog() {
-    val locationPermissionsState = rememberMultiplePermissionsState(
-        listOf(
-            android.Manifest.permission.ACCESS_COARSE_LOCATION,
-            android.Manifest.permission.ACCESS_FINE_LOCATION,
-        )
-    )
-    println(locationPermissionsState.toString())
-    LaunchedEffect(key1 = locationPermissionsState) {
-        println(locationPermissionsState)
-        if (!locationPermissionsState.allPermissionsGranted) {
-            println("here")
-            locationPermissionsState.launchMultiplePermissionRequest()
-        }
+fun LocationDialog(
+    locationPermissionsState: MultiplePermissionsState,
+    onLocationPermissionChange: (shouldUSeGPS: Boolean) -> Unit) {
+
+    LaunchedEffect(locationPermissionsState.permissions
+        .any { it.status.isGranted }) {
+        locationPermissionsState.launchMultiplePermissionRequest()
+        onLocationPermissionChange(
+            locationPermissionsState.permissions
+                .any { it.status.isGranted })
     }
 }

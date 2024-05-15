@@ -38,13 +38,13 @@ sealed interface ReverseLocation {
 
     @JsonClass(generateAdapter = true)
     data class Address(
-        @Json(name = "house_number") val houseNumber: String,
-        @Json(name = "road") val road: String,
-        val suburb: String,
-        val city: String,
-        val county: String,
-        val state: String,
-        val postcode: String,
+        @Json(name = "house_number") val houseNumber: String?,
+        @Json(name = "road") val road: String?,
+        val suburb: String?,
+        val city: String?,
+        val county: String?,
+        val state: String?,
+        val postcode: String?,
         val country: String,
         @Json(name = "country_code") val countryCode: String,
     )
@@ -60,7 +60,6 @@ fun ReverseLocation.toUiModelLocation(lattiude: Double, longtiude: Double) = whe
         name = "Unknown",
         fullName = "Could not find location",
         latitude = lattiude, longitude = longtiude,
-        shouldUseGps = true
     )
 
     is ReverseLocation.Location -> features.first().let {
@@ -68,7 +67,6 @@ fun ReverseLocation.toUiModelLocation(lattiude: Double, longtiude: Double) = whe
             name = it.properties.name ?: it.properties.displayName,
             fullName = it.properties.displayName,
             latitude = it.geometry.coordinates[1], longitude = it.geometry.coordinates[0],
-            shouldUseGps = false
         )
     }
 }

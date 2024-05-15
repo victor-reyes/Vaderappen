@@ -37,10 +37,12 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import kotlinx.coroutines.flow.map
+import com.google.accompanist.permissions.ExperimentalPermissionsApi
+import com.google.accompanist.permissions.rememberMultiplePermissionsState
 import nu.vaderappen.ui.forecast.ForecastScreen
 import nu.vaderappen.ui.forecast.ForecastViewModel
 import nu.vaderappen.ui.home.HomeViewModel
+import nu.vaderappen.ui.location.Location
 import nu.vaderappen.ui.location.LocationDialog
 import nu.vaderappen.ui.location.ROUTE_SEARCH
 import nu.vaderappen.ui.location.SearchLocationScreen
@@ -62,21 +64,52 @@ class MainActivity : ComponentActivity() {
 @Composable
 private fun Home(homeViewModel: HomeViewModel = viewModel(factory = HomeViewModel.Factory)) {
 
-   val currentLocation by homeViewModel.location
-       .map { it.name }
-       .collectAsStateWithLifecycle(initialValue = "Unknown")
-    Home(currentLocation = currentLocation)
+    val currentLocation by homeViewModel.currentLocation
+        .collectAsStateWithLifecycle()
+    Home(
+        currentLocation = currentLocation,
+        onLocationPermissionChange = homeViewModel::setCanUseGPS,
+        onSearchLocation = homeViewModel::onSearchLocation
+    )
 }
 
+@OptIn(ExperimentalPermissionsApi::class)
 @Composable
-private fun Home(currentLocation: String) {
-
-    LocationDialog()
+private fun Home(
+    currentLocation: Location?,
+    onLocationPermissionChange: (canUseGPS: Boolean) -> Unit,
+    onSearchLocation: () -> Unit
+) {
+    val locationPermissionsState = rememberMultiplePermissionsState(
+        listOf(
+            android.Manifest.permission.ACCESS_COARSE_LOCATION,
+            android.Manifest.permission.ACCESS_FINE_LOCATION,
+        )
+    )
+    LocationDialog(
+        locationPermissionsState = locationPermissionsState,
+        onLocationPermissionChange = onLocationPermissionChange
+    )
     val navController = rememberNavController()
     val currentStackEntry by navController.currentBackStackEntryAsState()
     Scaffold(
-        topBar = { WeatherTopBar(currentLocation, currentStackEntry, navController) },
-        bottomBar = { WeatherNavBar(currentStackEntry, navController) }
+        topBar = {
+            WeatherTopBar(
+                currentLocation = currentLocation,
+                current = currentStackEntry,
+                navController = navController,
+                onSearchLocation = {
+                    onSearchLocation()
+                    locationPermissionsState.launchMultiplePermissionRequest()
+                }
+            )
+        },
+        bottomBar = {
+            WeatherNavBar(
+                current = currentStackEntry,
+                navController = navController
+            )
+        }
     ) {
         Box(modifier = Modifier.padding(it)) {
             WeatherNavHost(navHostController = navController)
@@ -88,19 +121,28 @@ private fun Home(currentLocation: String) {
 @Composable
 @OptIn(ExperimentalMaterial3Api::class)
 private fun WeatherTopBar(
-    currentLocation: String,
+    currentLocation: Location?,
     current: NavBackStackEntry?,
     navController: NavHostController,
+    onSearchLocation: () -> Unit
 ) {
     if (current?.destination?.route != ROUTE_SEARCH)
         TopAppBar(
-            title = { Text(text = currentLocation) },
+            title = {
+                Text(text = currentLocation?.name ?: "")
+            },
             modifier = Modifier.shadow(8.dp),
             actions = {
+                IconButton(onClick = onSearchLocation) {
+                    Icon(
+                        painter = painterResource(id = R.drawable.baseline_my_location_24),
+                        contentDescription = "Find my location"
+                    )
+                }
                 IconButton(onClick = { navController.navigate(ROUTE_SEARCH) }) {
                     Icon(
                         imageVector = Icons.Filled.Search,
-                        contentDescription = "Sök"
+                        contentDescription = "Search"
                     )
                 }
             }

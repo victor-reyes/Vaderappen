@@ -6,7 +6,6 @@ import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.AP
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.CreationExtras
 import androidx.room.Entity
-import androidx.room.Ignore
 import androidx.room.PrimaryKey
 import com.google.android.gms.location.LocationServices
 import com.squareup.moshi.JsonClass
@@ -38,10 +37,10 @@ class LocationViewModel(
     init {
         val currentLocation = locationManager.currentLocation
             .map {
-                it?.let {
-                    locationService
-                        .getReverseGeoCoding(it.latitude, it.longitude)
-                        .toUiModelLocation(it.latitude, it.longitude)
+                println("Search $it")
+                it?.let { (lat, long) ->
+                    locationService.getReverseGeoCoding(lat, long)
+                        .toUiModelLocation(lat, long)
                 }
             }
         val favedLocations = locationRepository.getFavedLocations()
@@ -55,7 +54,7 @@ class LocationViewModel(
                 searched.map { loc -> loc.copy(isFaved = faved.find { loc.fullName == it.fullName } != null) },
                 faved
             )
-        }.stateIn(viewModelScope, SharingStarted.Lazily, LocationUiState.Loading)
+        }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5000), LocationUiState.Loading)
     }
 
     fun searchLocation(query: String) {
@@ -79,10 +78,11 @@ class LocationViewModel(
         }
     }
 
-    fun onLocationSelected(location: Location, isGps: Boolean) {
+    fun onLocationSelected(location: Location, shouldUseGPS: Boolean) {
         searchedLocations.value = emptyList()
         viewModelScope.launch {
-            prefsRepository.saveLocation(location.copy(shouldUseGps = isGps))
+            prefsRepository.saveLocation(location)
+            prefsRepository.setShouldUseGPS(shouldUseGPS)
         }
     }
 
@@ -99,8 +99,8 @@ class LocationViewModel(
                 val database = LocationDatabase.getInstance(application)
                 val locationRepository = LocationRepository(database.locationDao())
                 val prefsRepository = PrefsRepository(application.dataStore)
-                val locationManager =
-                    LocationManager(LocationServices.getFusedLocationProviderClient(application))
+                val locationManager = LocationManager
+                    .getInstance(LocationServices.getFusedLocationProviderClient(application))
                 return LocationViewModel(
                     locationService = locationService,
                     locationRepository = locationRepository,
@@ -130,23 +130,7 @@ data class Location(
     val latitude: Double,
     val longitude: Double,
     val isFaved: Boolean = false,
-    @Ignore val shouldUseGps: Boolean = false,
-) {
-    constructor(
-        name: String,
-        fullName: String,
-        latitude: Double,
-        longitude: Double,
-        isFaved: Boolean,
-    ) : this(
-        name = name,
-        fullName = fullName,
-        latitude = latitude,
-        longitude = longitude,
-        isFaved = isFaved,
-        shouldUseGps = false
-    )
-}
+)
 
 
 private fun nu.vaderappen.data.service.location.Location.toUiModelLocation() = features.map {
@@ -155,6 +139,5 @@ private fun nu.vaderappen.data.service.location.Location.toUiModelLocation() = f
         fullName = it.properties.displayName,
         latitude = it.geometry.coordinates[1],
         longitude = it.geometry.coordinates[0],
-        shouldUseGps = false
     )
 }

@@ -3,6 +3,7 @@ package nu.vaderappen.data.service.prefs
 import android.content.Context
 import androidx.datastore.core.DataStore
 import androidx.datastore.preferences.core.Preferences
+import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -30,18 +31,26 @@ class PrefsRepository(private val dataStore: DataStore<Preferences>) {
         }
     }
 
+    suspend fun setShouldUseGPS(should: Boolean) = dataStore.edit {
+        it[SHOULD_USE_GPS_KEY] = should
+    }
+
     // Function to fetch the Location object from DataStore
     val location: Flow<Location?> = dataStore.data
         .map { preferences ->
             val json = preferences[LOCATION_KEY]
-            json?.let { locationAdapter.fromJson(it) } ?: defaultLocation
+            json?.let { locationAdapter.fromJson(it) }
         }
-        .onEach { println("In prefs, Location: $it") }
+        .onEach { println("Prefs, Location: $it") }
+
+    val shouldUseGPS = dataStore.data
+        .map { it[SHOULD_USE_GPS_KEY] ?: true }
+        .onEach { println("Prefs, should use GPS: $it") }
+
 
     companion object {
         private val LOCATION_KEY = stringPreferencesKey("location")
-
-        private val defaultLocation = Location("Stockholm", "Stockholm", 59.329323, 18.068581)
+        private val SHOULD_USE_GPS_KEY = booleanPreferencesKey("should_use_gps")
     }
 
 }

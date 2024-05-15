@@ -49,8 +49,8 @@ fun SearchLocationScreen(
         locationUiState = locationUiState,
         onBackClicked = onBackClicked,
         onSearch = locationViewModel::searchLocation,
-        onLocationSelected = { location, isGps ->
-            locationViewModel.onLocationSelected(location, isGps)
+        onLocationSelected = { location, shouldUseGPS ->
+            locationViewModel.onLocationSelected(location, shouldUseGPS)
             onBackClicked()
         },
         onFavedChange = locationViewModel::onFavedChange
@@ -63,7 +63,7 @@ private fun SearchLocationScreen(
     locationUiState: LocationUiState,
     onBackClicked: () -> Unit,
     onSearch: (String) -> Unit,
-    onLocationSelected: (location: Location, isGps: Boolean) -> Unit,
+    onLocationSelected: (location: Location, shouldUseGPS: Boolean) -> Unit,
     onFavedChange: (location: Location, isFaved: Boolean) -> Unit,
 ) {
     Scaffold(

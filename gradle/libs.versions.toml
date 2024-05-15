@@ -21,6 +21,8 @@ adaptiveAndroid = "1.0.0-alpha12"
 accompanist = "0.35.0-alpha"
 playServicesLocation = "21.2.0"
 
+kotlinxCoroutinesPlayServices = "1.8.1"
+
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
 junit = { group = "junit", name = "junit", version.ref = "junit" }
@@ -58,6 +60,7 @@ androidx-adaptive-android = { group = "androidx.compose.material3.adaptive", nam
 accompanist-permissions = { group = "com.google.accompanist", name = "accompanist-permissions", version.ref = "accompanist" }
 play-services-location = { group = "com.google.android.gms", name = "play-services-location", version.ref = "playServicesLocation" }
 
+kotlinx-coroutines-play-services = { group = "org.jetbrains.kotlinx", name ="kotlinx-coroutines-play-services", version.ref= "kotlinxCoroutinesPlayServices"}
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
 jetbrains-kotlin-android = { id = "org.jetbrains.kotlin.android", version.ref = "kotlin" }
